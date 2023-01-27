@@ -25,7 +25,6 @@ else:
 # Data path to the database
 data_path = Path("D:\gitProjects\segmentation_unet\data_set")
 checkpoint_filepath = data_path.joinpath("model", "checkpoint_BinaryCrossentropy")
-# checkpoint_filepath = str(data_path.joinpath("model", "checkpoint_BinaryJaccardIndex"))
 
 # Reading the images and the labels in the same order
 rgb_filenames = list(data_path.joinpath("images").glob(r"*.png"))
@@ -94,5 +93,5 @@ for ii in range(pred.shape[0]):
     # plt.show()
 
     out_img = np.vstack((out_top, out_bottom))
-    out_path = data_path.joinpath("predictions", rgb_filenames[ii].name)
+    out_path = data_path.joinpath("predictions_BinaryCrossentropy", rgb_filenames[ii].name)
     cv2.imwrite(str(out_path), out_img)

@@ -11,10 +11,12 @@ def read_list_imgs(file_list, normalize=False):
     """
     list_imgs = []
     for img_file in file_list:
+        # Reading opencv image with the alpha channel
         img_bgr = cv2.imread(str(img_file), cv2.IMREAD_UNCHANGED)
         if normalize:
             img_bgr = img_bgr.astype("float32") / 255.
 
+        # Images are appended to the list and returned as np array
         list_imgs.append(img_bgr)
 
     return np.array(list_imgs)

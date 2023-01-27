@@ -10,15 +10,6 @@ import matplotlib
 matplotlib.use(r"TKAgg")
 
 
-def _binary_jaccard_index(y_true, y_pred):
-    # Jaccard index more accurate for image binary segmentation
-    num = np.sum(np.bitwise_and(y_true, y_pred))
-    den = np.sum(np.bitwise_or(y_true, y_pred))
-    if den == 0:
-        return 0
-    else:
-        return num / den
-
 
 # Verifying if Keras can run with the GPU
 gpus = tf.config.list_physical_devices('GPU')
@@ -35,7 +26,6 @@ data_path = Path("D:\gitProjects\segmentation_unet\data_set")
 
 # Necessary variables for the Unet training
 checkpoint_filepath = str(data_path.joinpath("model", "checkpoint_BinaryCrossentropy"))
-# checkpoint_filepath = str(data_path.joinpath("model", "checkpoint_BinaryJaccardIndex"))
 model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_filepath,
     save_weights_only=False,
@@ -48,7 +38,7 @@ BATCH_SIZE = 20
 EPOCHS = 100
 IMG_SIZE = (320, 512)
 N_CLASSES = 4
-PERCENTAGE_TRAINING = 60 # 50 - 100
+PERCENTAGE_TRAINING = 70 # 50 - 100
 
 # Reading the images and the labels in the same order
 rgb_filenames = list(data_path.joinpath("images").glob(r"*.png"))
@@ -88,7 +78,6 @@ print(model.summary())
 # Setting the optimizer settings
 model.compile(
     optimizer=tf.keras.optimizers.Adam(LEARNING_RATE), 
-    # loss=_binary_jaccard_index,
     loss=tf.keras.losses.BinaryCrossentropy(),
     metrics=['accuracy']
     )

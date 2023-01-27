@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 def one_hot_encoding(color_labels):
-    labels = np.zeros((color_labels.shape[0], color_labels.shape[1]))
+    labels = np.zeros((color_labels.shape[0], color_labels.shape[1]), dtype="uint8")
     labels[
         np.where(
             (color_labels[::, ::, 0] == 0) & 
@@ -25,7 +25,10 @@ def one_hot_encoding(color_labels):
             (color_labels[::, ::, 2] == 255)
         )
             ] = 3  # Red in color_labels -> Pupil
-    labels[np.where(labels == 0)] = 4
+    labels[np.where(labels == 0)] = 4 # The rest of the image is eyelids and clamps
+    
+    # Setting spurious segments in the rest of the image
+    labels = cv2.medianBlur(labels, ksize=5)
 
     labels_one_hot_encoded = np.zeros(
         (color_labels.shape[0], color_labels.shape[1], 4)).astype("uint8")
