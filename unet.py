@@ -2,11 +2,13 @@ import torch
 import torch.nn as nn
 import torchvision.transforms.functional as tf
 
+import numpy as np
+
 class DoubleConv(nn.Module):
     """
     Basic building block for UNet which is double convolution per resolution level
     """
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int , out_channels: int):
         super().__init__()
         # Two convolutions per level and no bias because it is normalized
         self.conv = nn.Sequential(
@@ -18,7 +20,7 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray):
         return self.conv(x)
 
 
@@ -29,7 +31,7 @@ class UNet(nn.Module):
     by Olaf Ronneberger, Philipp Fischer, and Thomas Brox
     Great explanation at https://www.youtube.com/watch?v=IHq1t7NxS8k
     """
-    def __init__(self, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
+    def __init__(self, in_channels: int =3, out_channels: int =1, features: list=[64, 128, 256, 512]):
         """
         Initializes the building block of the UNet model
         """
@@ -60,7 +62,7 @@ class UNet(nn.Module):
         # The final convolution to set the number of output channels or labels
         self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray):
         """
         Computes the UNet model in x
         """
