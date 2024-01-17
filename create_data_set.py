@@ -39,37 +39,51 @@ def one_hot_encoding(color_labels: np.ndarray) -> np.ndarray:
     return labels_one_hot_encoded
 
 
-list_rgb_img = list(Path(r"C:\Users\dukej\OneDrive - Cassini Technologies B.V\anchor_frame").glob(r"**\*.png"))
-path_label_img = Path(r"C:\Users\dukej\OneDrive - Cassini Technologies B.V\anchor_frame_annotations")
+source_folder = Path(r"D:\gitProjects\segmentation_unet\data_set\__database_manual_segmentation")
+data_folder = Path(r"D:\gitProjects\segmentation_unet\data_set\data")
 
-path_bgr_out = Path(r"D:\gitProjects\segmentation_unet\data_set\images")
-path_label_out = Path(r"D:\gitProjects\segmentation_unet\data_set\labels")
-SAMPLE_FACT = 3
+list_subfolders = ["0_predev", "1_dev", "2_posdev"]
 
 if __name__ == "__main__":
-    for ii in list_rgb_img:
-        print(f"Processing {ii.stem}")
-        # Reading the images
-        file_name = ii.name
-        parent_folder = ii.parent.name
-        bgr_img = cv2.imread(str(ii))
-        bgr_label_img = cv2.imread(str(path_label_img.joinpath(parent_folder, file_name)))
+    # Constructing the set of images for training and testing
+    # Note that the images are down-sampled in here
+    # We have notices that the segmentation can be done in very low resolution images
+    SAMPLING_FACTOR = 8
+    
+    # Images in 0_predev and 1_dev are used for training and 2_posdev for testing
+    for ii in list_subfolders:
+        list_source = list(source_folder.joinpath(ii, "input").glob("*.png"))
+        
+        # Reading the images and down-sampling them
+        for jj in list_source:
+            source_path = jj
+            filename = jj.name
+            labels_path = source_folder.joinpath(ii, "labels", filename)
 
-        # One hot encoding the labels
-        labels_one_hot_encoded = one_hot_encoding(bgr_label_img)
+            # Reading images
+            source_img = cv2.imread(str(source_path))
+            labels_img = cv2.imread(str(labels_path))
+            one_hot_encoding_img = one_hot_encoding(labels_img)
 
-        # Anonymizing the output image
-        list_str = ii.name.split(" ")
-        name_out = f"{parent_folder}_{list_str[0][:2:]}_{list_str[1][:2:]}_{list_str[-1]}"
-        out_img_path = str(path_bgr_out.joinpath(name_out))
-        out_label_path = str(path_label_out.joinpath(name_out))
+            # Removing the interlacing and downsampling
+            source_img = source_img[::2, ::2]
+            source_img = cv2.GaussianBlur(source_img, ksize=(7, 7), sigmaX=5)
+            source_img = source_img[::SAMPLING_FACTOR, ::SAMPLING_FACTOR]
 
-        # Preprocessing the images before storage
-        img_bgr_out = bgr_img[::SAMPLE_FACT, ::SAMPLE_FACT]
-        img_bgr_out = img_bgr_out[20:-20:, 64:-64:]
-        img_labels_out = labels_one_hot_encoded[::SAMPLE_FACT, ::SAMPLE_FACT]
-        img_labels_out = img_labels_out[20:-20:, 64:-64:]
+            # One hot encoding
+            one_hot_encoding_img = one_hot_encoding_img[::2 * SAMPLING_FACTOR, ::2 * SAMPLING_FACTOR]
 
-        # Storing the images with the labels
-        cv2.imwrite(out_img_path, img_bgr_out)
-        cv2.imwrite(out_label_path, img_labels_out)
+            # Storing the images
+            if ii in ["0_predev", "1_dev"]:
+                folder_store = data_folder.joinpath("training")
+            else:
+                folder_store = data_folder.joinpath("testing")
+
+            folder_source = folder_store.joinpath("source")
+            folder_source.mkdir(parents=True, exist_ok=True)
+
+            folder_labels = folder_store.joinpath("labels")
+            folder_labels.mkdir(parents=True, exist_ok=True)
+
+            cv2.imwrite(str(folder_source.joinpath(filename)), source_img)
+            cv2.imwrite(str(folder_labels.joinpath(filename)), one_hot_encoding_img)

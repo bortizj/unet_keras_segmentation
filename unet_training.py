@@ -1,52 +1,65 @@
 import torch
+
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
-from torchvision import transforms
-from torchvision import datasets
+import torch.optim as optim
 from unet import UNet
+# from utils import (
+#     load_checkpoint,
+#     save_checkpoint,
+#     get_loaders,
+#     check_accuracy,
+#     save_predictions_as_imgs,
+# )
 
-class YourDataset(Dataset):
-    def __init__(self, images_folder, segments_folder, transform=None):
-        self.images_folder = datasets.ImageFolder(images_folder, transform=transform)
-        self.segments_folder = datasets.ImageFolder(segments_folder, transform=transform)
+import tqdm
 
-    def __len__(self):
-        return len(self.images_folder)
 
-    def __getitem__(self, idx):
-        image, _ = self.images_folder[idx]
-        segment, _ = self.segments_folder[idx]
+def get_data_loaders():
+    pass
 
-        return image, segment
 
-# Define your U-Net model
-model = UNet(in_channels=3, out_channels=4)
 
-# Define a loss function and optimizer
-criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(model.parameters())
+# Hyperparameters etc.
+LEARNING_RATE = 1e-4
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+BATCH_SIZE = 16
+NUM_EPOCHS = 3
+NUM_WORKERS = 2
+IMAGE_HEIGHT = 68  # 1080 originally
+IMAGE_WIDTH = 120  # 1920 originally
+PIN_MEMORY = True
+LOAD_MODEL = False
 
-# Define the data transform
-transform = transforms.Compose([transforms.ToTensor()])
 
-# Create the dataset
-dataset = YourDataset(images_folder='D:\gitProjects\segmentation_unet\data_set\images', segments_folder='D:\gitProjects\segmentation_unet\data_set\labels', transform=transform)
+def train_fun(loader, model, optimizer, loss_fn, scaler):
+    """
+    Will do one epoch of the training
+    """
+    tqdm_loop = tqdm(loader)
 
-# Create the dataloader with a batch size of 32
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    for batch_idx, (data, targets) in enumerate(tqdm_loop):
+        data = data.to(device=DEVICE)
+        targets = targets.to(device=DEVICE)
 
-num_epochs = 10
-# Train the model
-for epoch in range(num_epochs):
-    for i, (images, segments) in enumerate(dataloader):
-        # Forward pass
-        outputs = model(images)
-        loss = criterion(outputs, segments)
+        # Forward step
+        with torch.cuda.amp.autocast():
+            predictions = model(data)
+            loss = loss_fn(predictions, targets)
 
-        # Backward and optimize
+        # Backward step
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
-torch.save(model.state_dict(), 'unet_model.pth')
+        tqdm_loop.set_postfix(loss=loss.item())
+
+
+def main():
+    # Getting the model, lost function and the optimizer for training
+    model = UNet(in_channels=3, out_channels=4).to(DEVICE)
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+    # Getting the data loaders for training
+    train_loader, val_loader = get_data_loaders(training_dir, validation_dir, BATCH_SIZE)
