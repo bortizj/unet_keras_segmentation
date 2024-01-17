@@ -1,9 +1,8 @@
-from matplotlib import pyplot as plt
 from pathlib import Path
 import numpy as np
 import cv2
 
-def one_hot_encoding(color_labels):
+def one_hot_encoding(color_labels: np.ndarray) -> np.ndarray:
     labels = np.zeros((color_labels.shape[0], color_labels.shape[1]), dtype="uint8")
     labels[
         np.where(

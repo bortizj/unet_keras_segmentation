@@ -49,8 +49,6 @@ class MyCustomGenerator(Sequence):
 
 
 def create_unet(insize=(320, 512), nclasses=4):
-    # create unet network
-    # Thanks to Lin Lyu - https://github.com/lyulin1995
     inputs = Input((insize[0], insize[1], 3))
     conv1 = Conv2D(8, (3, 3), activation='relu', padding='same',
                 kernel_initializer='he_normal')(inputs)
