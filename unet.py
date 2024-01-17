@@ -1,118 +1,114 @@
-from __future__ import print_function, division
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils.data
 import torch
+import torch.nn as nn
+import torchvision.transforms.functional as tf
 
-
-class conv_block(nn.Module):
+class DoubleConv(nn.Module):
     """
-    Convolution Block 
+    Basic building block for UNet which is double convolution per resolution level
     """
-    def __init__(self, in_ch, out_ch):
-        super(conv_block, self).__init__()
-        
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        # Two convolutions per level and no bias because it is normalized
         self.conv = nn.Sequential(
-            nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=1, padding=1, bias=True),
-            nn.BatchNorm2d(out_ch),
+            nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, stride=1, padding=1, bias=True),
-            nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True))
-
-    def forward(self, x):
-
-        x = self.conv(x)
-        return x
-
-
-class up_conv(nn.Module):
-    """
-    Up Convolution Block
-    """
-    def __init__(self, in_ch, out_ch):
-        super(up_conv, self).__init__()
-        self.up = nn.Sequential(
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=1, padding=1, bias=True),
-            nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True)
+            nn.Conv2d(out_channels, out_channels, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
-        x = self.up(x)
-        return x
+        return self.conv(x)
 
 
 class UNet(nn.Module):
     """
-    UNet - Basic Implementation
-    Paper : https://arxiv.org/abs/1505.04597
+    UNet model
+    "U-Net: Convolutional Networks for Biomedical Image Segmentation" 
+    by Olaf Ronneberger, Philipp Fischer, and Thomas Brox
+    Great explanation at https://www.youtube.com/watch?v=IHq1t7NxS8k
     """
-    def __init__(self, in_ch=3, out_ch=1):
-        super(UNet, self).__init__()
+    def __init__(self, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
+        """
+        Initializes the building block of the UNet model
+        """
+        super().__init__()
 
-        n1 = 64
-        filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
-        
-        self.Maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.Maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.Maxpool3 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.Maxpool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+        # For the up-sampling side of UNet (decoder)
+        self.ups = nn.ModuleList()
+        # For the down-sampling side of UNet (encoder)
+        self.downs = nn.ModuleList()
+        #  The pooling layer
+        self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.Conv1 = conv_block(in_ch, filters[0])
-        self.Conv2 = conv_block(filters[0], filters[1])
-        self.Conv3 = conv_block(filters[1], filters[2])
-        self.Conv4 = conv_block(filters[2], filters[3])
-        self.Conv5 = conv_block(filters[3], filters[4])
+        # Encoder of UNet as proposed in the original paper
+        for feature in features:
+            self.downs.append(DoubleConv(in_channels, feature))
+            in_channels = feature
 
-        self.Up5 = up_conv(filters[4], filters[3])
-        self.Up_conv5 = conv_block(filters[4], filters[3])
+        # Decoder of UNet as proposed in the original paper
+        for feature in reversed(features): 
+            self.ups.append(
+                nn.ConvTranspose2d(feature * 2, feature, kernel_size=2, stride=2)
+                )
+            self.ups.append(DoubleConv(feature * 2, feature))
 
-        self.Up4 = up_conv(filters[3], filters[2])
-        self.Up_conv4 = conv_block(filters[3], filters[2])
+        # The bottle neck of the network or connection between encoder and decoder
+        self.bottleneck = DoubleConv(features[-1], features[-1] * 2)
 
-        self.Up3 = up_conv(filters[2], filters[1])
-        self.Up_conv3 = conv_block(filters[2], filters[1])
-
-        self.Up2 = up_conv(filters[1], filters[0])
-        self.Up_conv2 = conv_block(filters[1], filters[0])
-
-        self.Conv = nn.Conv2d(filters[0], out_ch, kernel_size=1, stride=1, padding=0)
+        # The final convolution to set the number of output channels or labels
+        self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
 
     def forward(self, x):
+        """
+        Computes the UNet model in x
+        """
+        skip_connections = []
 
-        e1 = self.Conv1(x)
+        # computing encoder steps
+        for down in self.downs:
+            x = down(x)
+            skip_connections.append(x)
+            x = self.pooling(x)
 
-        e2 = self.Maxpool1(e1)
-        e2 = self.Conv2(e2)
+        # Computing bottle neck step
+        x = self.bottleneck(x)
 
-        e3 = self.Maxpool2(e2)
-        e3 = self.Conv3(e3)
+        # skip connections starts from the lowest to the highest resolution
+        skip_connections = skip_connections[::-1]
 
-        e4 = self.Maxpool3(e3)
-        e4 = self.Conv4(e4)
+        # Computing the decoder step
+        for ii in range(0, len(self.ups), 2):
+            # Applies ConvTranspose2d
+            x = self.ups[ii](x)
+            skip_connection = skip_connections[ii // 2]
 
-        e5 = self.Maxpool4(e4)
-        e5 = self.Conv5(e5)
+            # Resizing in case that image size is not divisible by two
+            if x.shape != skip_connection.shape:
+                x = tf.resize(x, size=skip_connection.shape[2:], antialias=False)
 
-        d5 = self.Up5(e5)
-        d5 = torch.cat((e4, d5), dim=1)
+            # Adds the layers of same resolution
+            concat_skip = torch.cat((skip_connection, x), dim=1)
 
-        d5 = self.Up_conv5(d5)
+            # Applies DoubleConv
+            x = self.ups[ii + 1](concat_skip)
+        
+        return self.final_conv(x)
 
-        d4 = self.Up4(d5)
-        d4 = torch.cat((e3, d4), dim=1)
-        d4 = self.Up_conv4(d4)
 
-        d3 = self.Up3(d4)
-        d3 = torch.cat((e2, d3), dim=1)
-        d3 = self.Up_conv3(d3)
+def test():
+    """
+    Making sure that the input output sizes are equal after going through the network
+    """
+    x = torch.randn((3, 1, 128, 128))
+    model = UNet(in_channels=1, out_channels=1)
+    preds = model(x)
+    print(preds.shape)
+    print(x.shape)
+    assert preds.shape == x.shape
 
-        d2 = self.Up2(d3)
-        d2 = torch.cat((e1, d2), dim=1)
-        d2 = self.Up_conv2(d2)
 
-        out = self.Conv(d2)
-
-        return out
+if __name__ == "__main__":
+    print(torch.cuda.is_available())
+    test()
