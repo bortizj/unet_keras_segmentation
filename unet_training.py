@@ -3,20 +3,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from unet import UNet
-# from utils import (
-#     load_checkpoint,
-#     save_checkpoint,
-#     get_loaders,
-#     check_accuracy,
-#     save_predictions_as_imgs,
-# )
+from utils import load_checkpoint
+from utils import save_checkpoint
+from utils import get_data_loaders
+from utils import check_accuracy
+from utils import save_predictions_as_imgs
 
 import tqdm
-
-
-def get_data_loaders():
-    pass
-
+from pathlib import Path
 
 
 # Hyperparameters etc.
@@ -29,6 +23,9 @@ IMAGE_HEIGHT = 68  # 1080 originally
 IMAGE_WIDTH = 120  # 1920 originally
 PIN_MEMORY = True
 LOAD_MODEL = False
+
+TRAINING_DIR = Path("D:\gitProjects\segmentation_unet\data_set\data\training")
+PERCENTAGE_VALIDATION = 30
 
 
 def train_fun(loader, model, optimizer, loss_fn, scaler):
@@ -62,4 +59,14 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # Getting the data loaders for training
-    train_loader, val_loader = get_data_loaders(training_dir, validation_dir, BATCH_SIZE)
+    train_loader, val_loader = get_data_loaders(
+        TRAINING_DIR, PERCENTAGE_VALIDATION, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY
+    )
+    scaler = torch.cuda.amp.GradScaler()
+
+    for epoch in range(NUM_EPOCHS):
+        train_fun(train_loader, model, optimizer, loss_fn, scaler)
+
+
+if __name__ == "__main__":
+    pass

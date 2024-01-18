@@ -22,11 +22,13 @@ class CostumeDataset(Dataset):
 
         # Reading and normalizing the source images to 0 - 1 as 32bit float
         source_img = cv2.imread(str(source_img_path), cv2.IMREAD_UNCHANGED)
-        source_img = source_img.astype("float32") / 255.
+        source_img = source_img.astype("float32") / 255.0
 
         # Reading from one hot encoding images
-        label_img = cv2.imread(str(label_img_path), cv2.IMREAD_UNCHANGED).astype("float32")
-        
+        label_img = cv2.imread(str(label_img_path), cv2.IMREAD_UNCHANGED).astype(
+            "float32"
+        )
+
         if self.transform is not None:
             augmentations = self.transform(image=source_img, mask=label_img)
             source_img = augmentations["image"]

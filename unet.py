@@ -4,11 +4,13 @@ import torchvision.transforms.functional as tf
 
 import numpy as np
 
+
 class DoubleConv(nn.Module):
     """
     Basic building block for UNet which is double convolution per resolution level
     """
-    def __init__(self, in_channels: int , out_channels: int):
+
+    def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
         # Two convolutions per level and no bias because it is normalized
         self.conv = nn.Sequential(
@@ -27,11 +29,17 @@ class DoubleConv(nn.Module):
 class UNet(nn.Module):
     """
     UNet model
-    "U-Net: Convolutional Networks for Biomedical Image Segmentation" 
+    "U-Net: Convolutional Networks for Biomedical Image Segmentation"
     by Olaf Ronneberger, Philipp Fischer, and Thomas Brox
     Great explanation at https://www.youtube.com/watch?v=IHq1t7NxS8k
     """
-    def __init__(self, in_channels: int =3, out_channels: int =1, features: list=[64, 128, 256, 512]):
+
+    def __init__(
+        self,
+        in_channels: int = 3,
+        out_channels: int = 1,
+        features: list = [64, 128, 256, 512],
+    ):
         """
         Initializes the building block of the UNet model
         """
@@ -50,10 +58,10 @@ class UNet(nn.Module):
             in_channels = feature
 
         # Decoder of UNet as proposed in the original paper
-        for feature in reversed(features): 
+        for feature in reversed(features):
             self.ups.append(
                 nn.ConvTranspose2d(feature * 2, feature, kernel_size=2, stride=2)
-                )
+            )
             self.ups.append(DoubleConv(feature * 2, feature))
 
         # The bottle neck of the network or connection between encoder and decoder
@@ -95,7 +103,7 @@ class UNet(nn.Module):
 
             # Applies DoubleConv
             x = self.ups[ii + 1](concat_skip)
-        
+
         return self.final_conv(x)
 
 
