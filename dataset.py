@@ -6,19 +6,19 @@ from pathlib import Path
 
 
 class CostumeDataset(Dataset):
-    def __init__(self, source_folder: Path, labels_folder: Path, transform=None):
-        self.source_path = source_folder
-        self.labels_path = labels_folder
+    def __init__(self, source_list: Path, labels_list: Path, transform=None):
         self.transform = transform
 
-        self.source_img_path_list = self.source_path.glob("*.png")
+        self.source_img_path_list = source_list
+        self.labels_img_path_list = labels_list
 
     def __len__(self):
         return len(self.source_img_path_list)
 
     def __getitem__(self, idx):
+        # The list of images must be sorted and correspond to each other
         source_img_path = self.source_img_path_list[idx]
-        label_img_path = self.labels_path.joinpath(source_img_path.name)
+        label_img_path = self.labels_img_path_list[idx]
 
         # Reading and normalizing the source images to 0 - 1 as 32bit float
         source_img = cv2.imread(str(source_img_path), cv2.IMREAD_UNCHANGED)
