@@ -25,6 +25,9 @@ def load_checkpoint(checkpoint, model):
 
 
 def divide_train_validate(path_data, percentage_training):
+    """
+    Convenient function to list all pngs in a folder and divide into validation and training
+    """
     # Reading the images and the labels in the same order
     source_filenames = list(path_data.joinpath("source").glob(r"*.png"))
     label_filenames = []
@@ -60,7 +63,7 @@ def get_data_loaders_divide(
     path_data, percentage_training, batch_size, num_workers, pin_memory, transform=None
 ):
     """
-    Convenient function to get data loaders from a data path
+    Convenient function to get data loaders from a data path dividing into validation and training
     """
     # Dividing in training and validation
     files_tuple = divide_train_validate(path_data, percentage_training)
@@ -103,6 +106,9 @@ def get_data_loaders_divide(
 
 
 def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=None):
+    """
+    Gets a data loader of the given folder path
+    """
     # Reading the images and the labels in the same order
     source_list = list(path_data.joinpath("source").glob(r"*.png"))
     labels_list = []
@@ -128,6 +134,9 @@ def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=N
 
 
 def check_accuracy(loader, model, device="cuda"):
+    """
+    Convenient function to compute accuracy of a given dataloader
+    """
     flag = True
 
     # Tells pytorch that we will evaluate the model
@@ -173,6 +182,9 @@ def check_accuracy(loader, model, device="cuda"):
 
 
 def save_predictions_as_imgs(loader, model, folder, device="cuda"):
+    """
+    Convenient function to store the predictions of each epoch
+    """
     # Tells pytorch that we will evaluate the model
     model.eval()
     # Does not calculate the gradient
@@ -207,7 +219,7 @@ def save_individual_prediction(
     model.eval()
     # Does not calculate the gradient
     with torch.no_grad():
-        preds_tensor = model(source_tensor.unsqueeze(0))
+        preds_tensor = torch.sigmoid(model(source_tensor.unsqueeze(0)))
 
     # Converting from tensor to image size
     if device == "cuda":

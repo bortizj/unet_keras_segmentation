@@ -57,6 +57,16 @@ def main():
             source_tensor, labels_tensor, model, out_file, device=DEVICE
         )
 
+    # Checking predictions in the testing data
+    path_out = TESTING_DIR.joinpath("predictions", "prediction")
+    path_out.mkdir(parents=True, exist_ok=True)
+    for ii in range(len(ds_test)):
+        out_file = path_out.joinpath(ds_test.source_img_path_list[ii].name)
+        source_tensor, labels_tensor = ds_test[ii]
+        save_individual_prediction(
+            source_tensor, labels_tensor, model, out_file, device=DEVICE
+        )
+
 
 if __name__ == "__main__":
     main()
