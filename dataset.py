@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import torchvision.transforms as transforms
 import numpy as np
 import cv2
 
@@ -8,6 +9,9 @@ from pathlib import Path
 class CostumeDataset(Dataset):
     def __init__(self, source_list: Path, labels_list: Path, transform=None):
         self.transform = transform
+
+        # Define a transform to convert the image to tensor
+        self.tensor_transform = transforms.ToTensor()
 
         self.source_img_path_list = source_list
         self.labels_img_path_list = labels_list
@@ -29,9 +33,12 @@ class CostumeDataset(Dataset):
             "float32"
         )
 
+        # Converting the images into tensors
+        source_img = self.tensor_transform(source_img)
+        label_img = self.tensor_transform(label_img)
+
         if self.transform is not None:
-            augmentations = self.transform(image=source_img, mask=label_img)
-            source_img = augmentations["image"]
-            label_img = augmentations["mask"]
+            source_img = self.transform(source_img)
+            label_img = self.transform(label_img)
 
         return source_img, label_img

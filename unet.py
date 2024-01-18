@@ -37,7 +37,7 @@ class UNet(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
-        out_channels: int = 1,
+        out_channels: int = 4,
         features: list = [64, 128, 256, 512],
     ):
         """
@@ -111,11 +111,12 @@ def test():
     """
     Making sure that the input output sizes are equal after going through the network
     """
-    x = torch.randn((3, 1, 128, 128))
-    model = UNet(in_channels=1, out_channels=1)
+    x = torch.randn((16, 3, 68, 120))
+    model = UNet(in_channels=3, out_channels=3)
     preds = model(x)
     print(preds.shape)
     print(x.shape)
+
     assert preds.shape == x.shape
 
 

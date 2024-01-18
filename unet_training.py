@@ -19,12 +19,10 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16
 NUM_EPOCHS = 3
 NUM_WORKERS = 2
-IMAGE_HEIGHT = 68  # 1080 originally
-IMAGE_WIDTH = 120  # 1920 originally
 PIN_MEMORY = True
 LOAD_MODEL = False
 
-TRAINING_DIR = Path("D:\gitProjects\segmentation_unet\data_set\data\training")
+TRAINING_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data\training")
 PERCENTAGE_VALIDATION = 30
 
 
@@ -60,13 +58,36 @@ def main():
 
     # Getting the data loaders for training
     train_loader, val_loader = get_data_loaders(
-        TRAINING_DIR, PERCENTAGE_VALIDATION, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY
+        TRAINING_DIR,
+        PERCENTAGE_VALIDATION,
+        BATCH_SIZE,
+        NUM_WORKERS,
+        PIN_MEMORY,
     )
+
+    if LOAD_MODEL:
+        load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
+
+    check_accuracy(val_loader, model, device=DEVICE)
     scaler = torch.cuda.amp.GradScaler()
 
     for epoch in range(NUM_EPOCHS):
         train_fun(train_loader, model, optimizer, loss_fn, scaler)
 
+        # save model
+        checkpoint = {
+            "state_dict": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+        }
+        save_checkpoint(checkpoint)
+
+        # check accuracy
+        check_accuracy(val_loader, model, device=DEVICE)
+
+        # print some examples to a folder
+        folder_out = None
+        save_predictions_as_imgs(val_loader, model, folder_out, device=DEVICE)
+
 
 if __name__ == "__main__":
-    pass
+    main()

@@ -57,7 +57,7 @@ def divide_train_validate(path_data, percentage_training):
 
 
 def get_data_loaders(
-    path_data, percentage_training, batch_size, num_workers, pin_memory
+    path_data, percentage_training, batch_size, num_workers, pin_memory, transform=None
 ):
     """
     Convenient function to get data loaders from a data path
@@ -73,9 +73,9 @@ def get_data_loaders(
 
     # Creating the training data loader
     train_ds = CostumeDataset(
-        source_folder=source_training_list,
-        labels_folder=labels_training_list,
-        transform=None,
+        source_list=source_training_list,
+        labels_list=labels_training_list,
+        transform=transform,
     )
     train_loader = DataLoader(
         train_ds,
@@ -87,9 +87,9 @@ def get_data_loaders(
 
     # Creating the validation data loader
     validation_ds = CostumeDataset(
-        source_folder=source_validation_list,
-        labels_folder=labels_validation_list,
-        transform=None,
+        source_list=source_validation_list,
+        labels_list=labels_validation_list,
+        transform=transform,
     )
     validation_loader = DataLoader(
         validation_ds,
@@ -122,10 +122,11 @@ def check_accuracy(loader, model, device="cuda"):
             )
 
     print(
-        f"Got {num_correct}/{num_pixels} with accuracy {100 * num_correct / num_pixels:.2f}"
+        f"Got {num_correct}/{num_pixels} with accuracy {100 * num_correct / num_pixels:.6f}"
     )
-    print(f"Dice score {dice_score / len(loader):.6f}")
+    print(f"Dice score {100 * dice_score / len(loader):.6f}")
 
+    # Tells pytorch that the model still training
     model.train()
 
 
@@ -141,4 +142,5 @@ def save_predictions_as_imgs(loader, model, folder, device="cuda"):
 
             # Store here the images Perhaps encode them with RGBY as in the original images
 
+    # Tells pytorch that the model still training
     model.train()
