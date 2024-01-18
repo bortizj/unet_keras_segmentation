@@ -103,10 +103,9 @@ def get_data_loaders(
 
 
 def check_accuracy(loader, model, device="cuda"):
-    num_correct = 0
-    num_pixels = 0
-    dice_score = 0
+    flag = True
 
+    # Tells pytorch that we will evaluate the model
     model.eval()
     with torch.no_grad():
         for x, y in loader:
@@ -114,17 +113,33 @@ def check_accuracy(loader, model, device="cuda"):
             y = y.to(device)
 
             preds = torch.sigmoid(model(x))
-            preds(preds > 0.5).astype("float32")
-            num_correct += (preds == y).sum(axis=[0, 1])
-            num_pixels += np.sum(preds.shape[2::])
-            dice_score += (2 * preds * y).sum(axis=[0, 1]) / (
-                (preds + y).sum(axis=[0, 1]) + 1e-8
-            )
 
-    print(
-        f"Got {num_correct}/{num_pixels} with accuracy {100 * num_correct / num_pixels:.6f}"
-    )
-    print(f"Dice score {100 * dice_score / len(loader):.6f}")
+            preds = (preds > 0.5).type(torch.float32)
+            # Shape of the tensor is NBatch, Channels, Rows, Cols
+            shape_tensor = preds.shape
+            if flag:
+                num_correct = (preds == y).sum(axis=[0, 2, 3])
+                num_pixels = shape_tensor[0] * shape_tensor[2] * shape_tensor[3]
+                dice_score = (2 * preds * y).sum(axis=[0, 2, 3]) / (
+                    (preds + y).sum(axis=[0, 2, 3]) + 1e-8
+                )
+                flag = False
+            else:
+                num_correct += (preds == y).sum(axis=[0, 2, 3])
+                num_pixels += shape_tensor[0] * shape_tensor[2] * shape_tensor[3]
+                dice_score += (2 * preds * y).sum(axis=[0, 2, 3]) / (
+                    (preds + y).sum(axis=[0, 2, 3]) + 1e-8
+                )
+
+    # Print per class the accuracy
+    print("------------------Accuracy------------------")
+    for ii in range(model.out_channels):
+        print(
+            f"Class {ii} Got {num_correct[ii]}/{num_pixels} with accuracy {100 * num_correct[ii] / num_pixels:.3f}"
+        )
+    print("--------------------Dice--------------------")
+    for ii in range(model.out_channels):
+        print(f"Dice score {100 * dice_score[ii] / len(loader):.3f}")
 
     # Tells pytorch that the model still training
     model.train()
