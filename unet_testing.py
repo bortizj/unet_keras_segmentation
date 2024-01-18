@@ -11,6 +11,9 @@ from pathlib import Path
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+BATCH_SIZE = 16
+NUM_WORKERS = 2
+PIN_MEMORY = True
 
 TRAINING_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data\training")
 TESTING_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data\testing")
@@ -30,25 +33,18 @@ def main():
 
     load_checkpoint(torch.load(filename), model)
 
-    check_accuracy(val_loader, model, device=DEVICE)
+    loader_train_val = get_data_loaders(
+        TRAINING_DIR, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY
+    )
+    loader_test = get_data_loaders(TESTING_DIR, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY)
 
-    for epoch in range(NUM_EPOCHS):
-        train_fun(train_loader, model, optimizer, loss_fn, scaler)
+    print("Performance training and validation set")
+    check_accuracy(loader_train_val, model, device=DEVICE)
 
-        # save model
-        checkpoint = {
-            "state_dict": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-        }
-        save_checkpoint(checkpoint, filename)
+    print("Performance test set")
+    check_accuracy(loader_test, model, device=DEVICE)
 
-        # check accuracy
-        check_accuracy(val_loader, model, device=DEVICE)
-
-        # print some examples to a folder
-        save_predictions_as_imgs(val_loader, model, path_out, device=DEVICE)
-
-        print(f"Epochs processed {epoch + 1} / {NUM_EPOCHS}")
+    # TODO here we need to evaluate each image individually and store it using parula map
 
 
 if __name__ == "__main__":

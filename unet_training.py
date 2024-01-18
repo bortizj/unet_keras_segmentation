@@ -5,7 +5,7 @@ import torch.optim as optim
 from unet import UNet
 from utils import load_checkpoint
 from utils import save_checkpoint
-from utils import get_data_loaders
+from utils import get_data_loaders_divide
 from utils import check_accuracy
 from utils import save_predictions_as_imgs
 
@@ -59,7 +59,7 @@ def main():
     scaler = torch.cuda.amp.GradScaler()
 
     # Getting the data loaders for training
-    train_loader, val_loader = get_data_loaders(
+    train_loader, val_loader = get_data_loaders_divide(
         TRAINING_DIR,
         PERCENTAGE_TRAINING,
         BATCH_SIZE,

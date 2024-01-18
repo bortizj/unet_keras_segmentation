@@ -56,7 +56,7 @@ def divide_train_validate(path_data, percentage_training):
     )
 
 
-def get_data_loaders(
+def get_data_loaders_divide(
     path_data, percentage_training, batch_size, num_workers, pin_memory, transform=None
 ):
     """
@@ -100,6 +100,31 @@ def get_data_loaders(
     )
 
     return train_loader, validation_loader
+
+
+def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=None):
+    # Reading the images and the labels in the same order
+    source_list = list(path_data.joinpath("source").glob(r"*.png"))
+    labels_list = []
+    for ii in source_list:
+        filename = path_data.joinpath("labels", ii.name)
+        labels_list.append(filename)
+
+    # Creating the training data loader
+    ds = CostumeDataset(
+        source_list=source_list,
+        labels_list=labels_list,
+        transform=transform,
+    )
+    data_loader = DataLoader(
+        ds,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        shuffle=True,
+    )
+
+    return data_loader
 
 
 def check_accuracy(loader, model, device="cuda"):
