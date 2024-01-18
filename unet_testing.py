@@ -34,10 +34,12 @@ def main():
 
     load_checkpoint(torch.load(filename), model)
 
-    loader_train_val = get_data_loaders(
+    loader_train_val, ds_train_val = get_data_loaders(
         TRAINING_DIR, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY
     )
-    loader_test = get_data_loaders(TESTING_DIR, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY)
+    loader_test, ds_test = get_data_loaders(
+        TESTING_DIR, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY
+    )
 
     print("Performance training and validation set")
     check_accuracy(loader_train_val, model, device=DEVICE)
@@ -45,7 +47,15 @@ def main():
     print("Performance test set")
     check_accuracy(loader_test, model, device=DEVICE)
 
-    # TODO here we need to evaluate each image individually and store it using parula map
+    # Checking predictions in the training and validation data
+    path_out = TRAINING_DIR.joinpath("predictions", "prediction")
+    path_out.mkdir(parents=True, exist_ok=True)
+    for ii in range(len(ds_train_val)):
+        out_file = path_out.joinpath(ds_train_val.source_img_path_list[ii].name)
+        source_tensor, labels_tensor = ds_train_val[ii]
+        save_individual_prediction(
+            source_tensor, labels_tensor, model, out_file, device=DEVICE
+        )
 
 
 if __name__ == "__main__":

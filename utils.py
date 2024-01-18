@@ -124,7 +124,7 @@ def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=N
         shuffle=True,
     )
 
-    return data_loader
+    return data_loader, ds
 
 
 def check_accuracy(loader, model, device="cuda"):
@@ -194,5 +194,40 @@ def save_predictions_as_imgs(loader, model, folder, device="cuda"):
     model.train()
 
 
-def save_individual_prediction(in_bgr_img, model, filename, device="cuda"):
-    cv2.imread()
+def save_individual_prediction(
+    source_tensor, labels_tensor, model, filename, device="cuda"
+):
+    """
+    Convenient function to store individual predictions using the original filename
+    It is a wrapper for testing trained models in individual images
+    """
+    # Sending the data to the device
+    source_tensor = source_tensor.to(device=device)
+    # Tells pytorch that we will evaluate the model
+    model.eval()
+    # Does not calculate the gradient
+    with torch.no_grad():
+        preds_tensor = model(source_tensor.unsqueeze(0))
+
+    # Converting from tensor to image size
+    if device == "cuda":
+        preds_tensor = preds_tensor.squeeze(0).to("cpu")
+        source_tensor = source_tensor.to("cpu")
+    out_top = np.array(255 * source_tensor.permute(1, 2, 0), dtype="uint8")
+    out_bottom = out_top.copy()
+
+    for ii in range(4):
+        # Top image is the manual segmentation
+        label_ii = np.array(255 * labels_tensor[ii, ::, ::], dtype="uint8")
+        pseudo_label_ii = cv2.applyColorMap(label_ii, cv2.COLORMAP_PARULA)
+        out_top = np.hstack((out_top, pseudo_label_ii))
+
+        # bottom image is the automatic segmentation
+        prob_ii = np.array(
+            255 * torch.clip(preds_tensor[ii, ::, ::], min=0, max=1), dtype="uint8"
+        )
+        pseudo_label_ii = cv2.applyColorMap(prob_ii, cv2.COLORMAP_PARULA)
+        out_bottom = np.hstack((out_bottom, pseudo_label_ii))
+
+    out_img = np.vstack((out_top, out_bottom))
+    cv2.imwrite(str(filename), out_img)
