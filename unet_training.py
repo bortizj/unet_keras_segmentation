@@ -23,6 +23,7 @@ PIN_MEMORY = True
 LOAD_MODEL = False
 
 TRAINING_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data\training")
+CHECKPOINT_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data")
 PERCENTAGE_VALIDATION = 30
 
 
@@ -30,7 +31,7 @@ def train_fun(loader, model, optimizer, loss_fn, scaler):
     """
     Will do one epoch of the training
     """
-    tqdm_loop = tqdm(loader)
+    tqdm_loop = tqdm.tqdm(loader)
 
     for batch_idx, (data, targets) in enumerate(tqdm_loop):
         data = data.to(device=DEVICE)
@@ -64,14 +65,20 @@ def main():
         NUM_WORKERS,
         PIN_MEMORY,
     )
+    # Model filename checkpoint
+    filename = str(CHECKPOINT_DIR.joinpath("unet_checkpoint.tar"))
+
+    # Folder out for storing temporal outputs
+    path_out = TRAINING_DIR.joinpath("predictions")
+    path_out.mkdir(parents=True, exist_ok=True)
 
     if LOAD_MODEL:
-        load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
+        load_checkpoint(torch.load(filename), model)
 
     check_accuracy(val_loader, model, device=DEVICE)
     scaler = torch.cuda.amp.GradScaler()
 
-    for epoch in range(NUM_EPOCHS):
+    for epoch in tqdm.tqdm(range(NUM_EPOCHS)):
         train_fun(train_loader, model, optimizer, loss_fn, scaler)
 
         # save model
@@ -79,14 +86,13 @@ def main():
             "state_dict": model.state_dict(),
             "optimizer": optimizer.state_dict(),
         }
-        save_checkpoint(checkpoint)
+        save_checkpoint(checkpoint, filename)
 
         # check accuracy
         check_accuracy(val_loader, model, device=DEVICE)
 
         # print some examples to a folder
-        folder_out = None
-        save_predictions_as_imgs(val_loader, model, folder_out, device=DEVICE)
+        save_predictions_as_imgs(val_loader, model, path_out, device=DEVICE)
 
 
 if __name__ == "__main__":

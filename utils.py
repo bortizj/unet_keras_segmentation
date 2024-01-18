@@ -109,6 +109,7 @@ def check_accuracy(loader, model, device="cuda"):
     model.eval()
     with torch.no_grad():
         for x, y in loader:
+            # sending the data to the device for computations
             x = x.to(device)
             y = y.to(device)
 
@@ -139,7 +140,7 @@ def check_accuracy(loader, model, device="cuda"):
         )
     print("--------------------Dice--------------------")
     for ii in range(model.out_channels):
-        print(f"Dice score {100 * dice_score[ii] / len(loader):.3f}")
+        print(f"Class {ii} Dice score {100 * dice_score[ii] / len(loader):.3f}")
 
     # Tells pytorch that the model still training
     model.train()
@@ -148,14 +149,18 @@ def check_accuracy(loader, model, device="cuda"):
 def save_predictions_as_imgs(loader, model, folder, device="cuda"):
     model.eval()
     with torch.no_grad():
-        for x, y in loader:
-            x = x.to(device)
-            y = y.to(device)
-
+        for idx, (x, y) in enumerate(loader):
+            x = x.to(device=device)
             preds = torch.sigmoid(model(x))
-            preds(preds > 0.5).astype("float32")
+            preds = (preds > 0.5).float()
 
-            # Store here the images Perhaps encode them with RGBY as in the original images
+            # Storing the images using pytorch
+            for ii in range(model.out_channels):
+                # Storing each channel individually
+                path_out = folder.joinpath(f"{idx}_{ii}_pred.png")
+                torchvision.utils.save_image(preds[:, [ii]], str(path_out))
+                path_out = folder.joinpath(f"{idx}_{ii}_y.png")
+                torchvision.utils.save_image(y[:, [ii]], str(path_out))
 
     # Tells pytorch that the model still training
     model.train()
