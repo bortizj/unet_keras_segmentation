@@ -136,11 +136,11 @@ def check_accuracy(loader, model, device="cuda"):
     print("------------------Accuracy------------------")
     for ii in range(model.out_channels):
         print(
-            f"Class {ii} Got {num_correct[ii]}/{num_pixels} with accuracy {100 * num_correct[ii] / num_pixels:.3f}"
+            f"Class {ii} Got {num_correct[ii]}/{num_pixels} with accuracy {100 * num_correct[ii] / num_pixels:.2f}"
         )
     print("--------------------Dice--------------------")
     for ii in range(model.out_channels):
-        print(f"Class {ii} Dice score {100 * dice_score[ii] / len(loader):.3f}")
+        print(f"Class {ii} Dice score {100 * dice_score[ii] / len(loader):.2f}")
 
     # Tells pytorch that the model still training
     model.train()

@@ -17,7 +17,7 @@ from pathlib import Path
 LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16
-NUM_EPOCHS = 3
+NUM_EPOCHS = 20
 NUM_WORKERS = 2
 PIN_MEMORY = True
 LOAD_MODEL = False
@@ -78,7 +78,7 @@ def main():
     check_accuracy(val_loader, model, device=DEVICE)
     scaler = torch.cuda.amp.GradScaler()
 
-    for epoch in tqdm.tqdm(range(NUM_EPOCHS)):
+    for epoch in range(NUM_EPOCHS):
         train_fun(train_loader, model, optimizer, loss_fn, scaler)
 
         # save model
@@ -93,6 +93,8 @@ def main():
 
         # print some examples to a folder
         save_predictions_as_imgs(val_loader, model, path_out, device=DEVICE)
+
+        print(f"Epochs processed {epoch + 1} / {NUM_EPOCHS}")
 
 
 if __name__ == "__main__":
