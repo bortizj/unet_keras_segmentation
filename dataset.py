@@ -29,9 +29,8 @@ class CostumeDataset(Dataset):
         source_img = source_img.astype("float32") / 255.0
 
         # Reading from one hot encoding images
-        label_img = cv2.imread(str(label_img_path), cv2.IMREAD_UNCHANGED).astype(
-            "float32"
-        )
+        label_img = cv2.imread(str(label_img_path), cv2.IMREAD_UNCHANGED)
+        label_img = label_img.astype("float32") / 255.0
 
         # Converting the images into tensors
         source_img = self.tensor_transform(source_img)
