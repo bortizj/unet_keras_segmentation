@@ -24,7 +24,7 @@ LOAD_MODEL = False
 
 TRAINING_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data\training")
 CHECKPOINT_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data")
-PERCENTAGE_VALIDATION = 30
+PERCENTAGE_TRAINING = 70
 
 
 def train_fun(loader, model, optimizer, loss_fn, scaler):
@@ -61,7 +61,7 @@ def main():
     # Getting the data loaders for training
     train_loader, val_loader = get_data_loaders(
         TRAINING_DIR,
-        PERCENTAGE_VALIDATION,
+        PERCENTAGE_TRAINING,
         BATCH_SIZE,
         NUM_WORKERS,
         PIN_MEMORY,
