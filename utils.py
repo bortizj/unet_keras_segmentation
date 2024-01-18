@@ -132,6 +132,7 @@ def check_accuracy(loader, model, device="cuda"):
 
     # Tells pytorch that we will evaluate the model
     model.eval()
+    # Does not calculate the gradient
     with torch.no_grad():
         for x, y in loader:
             # sending the data to the device for computations
@@ -172,7 +173,9 @@ def check_accuracy(loader, model, device="cuda"):
 
 
 def save_predictions_as_imgs(loader, model, folder, device="cuda"):
+    # Tells pytorch that we will evaluate the model
     model.eval()
+    # Does not calculate the gradient
     with torch.no_grad():
         for idx, (x, y) in enumerate(loader):
             x = x.to(device=device)
@@ -189,3 +192,7 @@ def save_predictions_as_imgs(loader, model, folder, device="cuda"):
 
     # Tells pytorch that the model still training
     model.train()
+
+
+def save_individual_prediction(in_bgr_img, model, filename, device="cuda"):
+    cv2.imread()
