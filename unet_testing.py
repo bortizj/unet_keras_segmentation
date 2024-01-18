@@ -6,6 +6,7 @@ from unet import UNet
 from utils import load_checkpoint
 from utils import get_data_loaders
 from utils import check_accuracy
+from utils import save_individual_prediction
 
 from pathlib import Path
 
