@@ -17,7 +17,7 @@ from pathlib import Path
 LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16
-NUM_EPOCHS = 20
+NUM_EPOCHS = 500
 NUM_WORKERS = 2
 PIN_MEMORY = True
 LOAD_MODEL = False
@@ -52,6 +52,9 @@ def train_fun(loader, model, optimizer, loss_fn, scaler):
 
 
 def main():
+    """
+    Convenient function to start the model training for a number of epochs
+    """
     # Getting the model, lost function and the optimizer for training
     model = UNet(in_channels=3, out_channels=4).to(DEVICE)
     loss_fn = nn.CrossEntropyLoss()
