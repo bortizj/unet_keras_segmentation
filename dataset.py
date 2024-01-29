@@ -2,6 +2,8 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 import cv2
 
+import numpy as np
+
 
 class CostumeDataset(Dataset):
     """
@@ -22,7 +24,7 @@ class CostumeDataset(Dataset):
     def __len__(self):
         return len(self.source_img_path_list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[np.ndarray, np.ndarray]:
         # The list of images must correspond to each other
         source_img_path = self.source_img_path_list[idx]
         label_img_path = self.labels_img_path_list[idx]
