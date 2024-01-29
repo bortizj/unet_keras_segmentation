@@ -45,13 +45,17 @@ class UNet(nn.Module):
         """
         super().__init__()
 
+        # The number of channels for the input and output data tensors
         self.in_channels = in_channels
         self.out_channels = out_channels
 
-        # For the up-sampling side of UNet (decoder)
-        self.ups = nn.ModuleList()
         # For the down-sampling side of UNet (encoder)
         self.downs = nn.ModuleList()
+
+        # For the up-sampling side of UNet (decoder)
+        self.ups_deconv = nn.ModuleList()
+        self.ups_double = nn.ModuleList()
+
         #  The pooling layer
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -62,10 +66,10 @@ class UNet(nn.Module):
 
         # Decoder of UNet as proposed in the original paper
         for feature in reversed(features):
-            self.ups.append(
+            self.ups_deconv.append(
                 nn.ConvTranspose2d(feature * 2, feature, kernel_size=2, stride=2)
             )
-            self.ups.append(DoubleConv(feature * 2, feature))
+            self.ups_double.append(DoubleConv(feature * 2, feature))
 
         # The bottle neck of the network or connection between encoder and decoder
         self.bottleneck = DoubleConv(features[-1], features[-1] * 2)
@@ -81,7 +85,9 @@ class UNet(nn.Module):
 
         # computing encoder steps
         for down in self.downs:
+            # Applies the down-sampling layer
             x = down(x)
+            # Stores the connection to be applied in the up-sampling
             skip_connections.append(x)
             x = self.pooling(x)
 
@@ -92,10 +98,12 @@ class UNet(nn.Module):
         skip_connections = skip_connections[::-1]
 
         # Computing the decoder step
-        for ii in range(0, len(self.ups), 2):
+        for ii in range(0, len(self.ups_deconv)):
             # Applies ConvTranspose2d
-            x = self.ups[ii](x)
-            skip_connection = skip_connections[ii // 2]
+            x = self.ups_deconv[ii](x)
+
+            # Adding the data from the down-sampling phase
+            skip_connection = skip_connections[ii]
 
             # Resizing in case that image size is not divisible by two
             if x.shape != skip_connection.shape:
@@ -105,7 +113,7 @@ class UNet(nn.Module):
             concat_skip = torch.cat((skip_connection, x), dim=1)
 
             # Applies DoubleConv
-            x = self.ups[ii + 1](concat_skip)
+            x = self.ups_double[ii](concat_skip)
 
         return self.final_conv(x)
 
