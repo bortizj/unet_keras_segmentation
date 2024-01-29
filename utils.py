@@ -251,3 +251,18 @@ def save_individual_prediction(
     # Storing the mosaic image
     out_img = np.vstack((out_top, out_bottom))
     cv2.imwrite(str(filename), out_img)
+
+
+def store_predictions(path_data, ds_loader, model, device):
+    """
+    Convenient function to store the predictions from a given data loader
+    """
+    path_out = path_data.joinpath("predictions", "prediction")
+    path_out.mkdir(parents=True, exist_ok=True)
+    for ii in range(len(ds_loader)):
+        out_file = path_out.joinpath(ds_loader.source_img_path_list[ii].name)
+        # Gets the tensors from the data loader
+        source_tensor, labels_tensor = ds_loader[ii]
+        save_individual_prediction(
+            source_tensor, labels_tensor, model, out_file, device=device
+        )

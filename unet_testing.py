@@ -1,12 +1,11 @@
 import torch
 
-import torch.nn as nn
-import torch.optim as optim
 from unet import UNet
 from utils import load_checkpoint
 from utils import get_data_loaders
 from utils import check_accuracy
 from utils import save_individual_prediction
+from utils import store_predictions
 
 from pathlib import Path
 
@@ -22,7 +21,7 @@ CHECKPOINT_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data")
 
 
 def main():
-    # Getting the model, lost function and the optimizer for training
+    # Getting the model for testing
     model = UNet(in_channels=3, out_channels=4).to(DEVICE)
 
     # Model filename checkpoint
@@ -32,6 +31,7 @@ def main():
     path_out = TRAINING_DIR.joinpath("predictions")
     path_out.mkdir(parents=True, exist_ok=True)
 
+    # Loads the current model checkpoint
     load_checkpoint(torch.load(filename), model)
 
     loader_train_val, ds_train_val = get_data_loaders(
@@ -41,31 +41,19 @@ def main():
         TESTING_DIR, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY
     )
 
+    # Computing the performance for the training set
     print("Performance training and validation set")
     check_accuracy(loader_train_val, model, device=DEVICE)
 
+    # Computing the performance for the testing set
     print("Performance test set")
     check_accuracy(loader_test, model, device=DEVICE)
 
     # Checking predictions in the training and validation data
-    path_out = TRAINING_DIR.joinpath("predictions", "prediction")
-    path_out.mkdir(parents=True, exist_ok=True)
-    for ii in range(len(ds_train_val)):
-        out_file = path_out.joinpath(ds_train_val.source_img_path_list[ii].name)
-        source_tensor, labels_tensor = ds_train_val[ii]
-        save_individual_prediction(
-            source_tensor, labels_tensor, model, out_file, device=DEVICE
-        )
+    store_predictions(TRAINING_DIR, ds_train_val, model, DEVICE)
 
     # Checking predictions in the testing data
-    path_out = TESTING_DIR.joinpath("predictions", "prediction")
-    path_out.mkdir(parents=True, exist_ok=True)
-    for ii in range(len(ds_test)):
-        out_file = path_out.joinpath(ds_test.source_img_path_list[ii].name)
-        source_tensor, labels_tensor = ds_test[ii]
-        save_individual_prediction(
-            source_tensor, labels_tensor, model, out_file, device=DEVICE
-        )
+    store_predictions(TESTING_DIR, ds_test, model, DEVICE)
 
 
 if __name__ == "__main__":
