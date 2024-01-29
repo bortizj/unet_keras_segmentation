@@ -148,11 +148,13 @@ def check_accuracy(loader, model, device="cuda"):
             x = x.to(device)
             y = y.to(device)
 
+            # Predicts the output using the given model
             preds = torch.sigmoid(model(x))
 
             preds = (preds > 0.5).type(torch.float32)
             # Shape of the tensor is NBatch, Channels, Rows, Cols
             shape_tensor = preds.shape
+            # Computes the metrics for each class individually
             if flag:
                 num_correct = (preds == y).sum(axis=[0, 2, 3])
                 num_pixels = shape_tensor[0] * shape_tensor[2] * shape_tensor[3]
@@ -190,11 +192,12 @@ def save_predictions_as_imgs(loader, model, folder, device="cuda"):
     # Does not calculate the gradient
     with torch.no_grad():
         for idx, (x, y) in enumerate(loader):
+            # Very simple threshold to estimate the labels
             x = x.to(device=device)
             preds = torch.sigmoid(model(x))
             preds = (preds > 0.5).float()
 
-            # Storing the images using pytorch
+            # Storing the images using pytorch as a mosaic of the batch
             for ii in range(model.out_channels):
                 # Storing each channel individually
                 path_out = folder.joinpath(f"{idx}_{ii}_pred.png")
@@ -219,15 +222,19 @@ def save_individual_prediction(
     model.eval()
     # Does not calculate the gradient
     with torch.no_grad():
+        # The unsqueeze is used to add the batch dimension
         preds_tensor = torch.sigmoid(model(source_tensor.unsqueeze(0)))
 
-    # Converting from tensor to image size
+    # Moving to CPU if needed
     if device == "cuda":
         preds_tensor = preds_tensor.squeeze(0).to("cpu")
         source_tensor = source_tensor.to("cpu")
+
+    # Converting from tensor to image size
     out_top = np.array(255 * source_tensor.permute(1, 2, 0), dtype="uint8")
     out_bottom = out_top.copy()
 
+    # Making a mosaic where top is manual annotation and bottom is probability map
     for ii in range(4):
         # Top image is the manual segmentation
         label_ii = np.array(255 * labels_tensor[ii, ::, ::], dtype="uint8")
@@ -241,5 +248,6 @@ def save_individual_prediction(
         pseudo_label_ii = cv2.applyColorMap(prob_ii, cv2.COLORMAP_PARULA)
         out_bottom = np.hstack((out_bottom, pseudo_label_ii))
 
+    # Storing the mosaic image
     out_img = np.vstack((out_top, out_bottom))
     cv2.imwrite(str(filename), out_img)
