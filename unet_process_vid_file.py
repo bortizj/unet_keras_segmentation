@@ -15,9 +15,9 @@ PATH_MODEL = Path(r"D:\gitProjects\segmentation_unet\data_set\data")
 
 if __name__ == "__main__":
     path_vid_file = Path(r"F:\CaseRecording_1 CAM 1.mp4")
-    path_vid_file = Path(r"F:\CaseRecording_2 CAM 1.mp4")
-    path_vid_file = Path(r"F:\CaseRecording_4 CAM 1.mp4")
-    path_vid_file = Path(r"F:\CaseRecording_23 CAM 1.mp4")
+    # path_vid_file = Path(r"F:\CaseRecording_2 CAM 1.mp4")
+    # path_vid_file = Path(r"F:\CaseRecording_4 CAM 1.mp4")
+    # path_vid_file = Path(r"F:\CaseRecording_23 CAM 1.mp4")
     out_vid_file = path_vid_file.parent.joinpath(path_vid_file.name + "_processed.mp4")
 
     vr = VideoReader(str(path_vid_file))
@@ -33,14 +33,16 @@ if __name__ == "__main__":
 
     count = 0
 
-    with tqdm.tqdm(total=int(vr.get_len())) as pbar:
-        while count < vr.get_len():
+    with tqdm.tqdm(total=100000) as pbar:
+        while True:
             frame = vr.read_frame()
 
             if frame is not None:
                 out_img = unet_model.evaluate_image(frame)
 
                 vw.write_frame(out_img)
+            else:
+                break
 
             count += 1
 
