@@ -1,5 +1,7 @@
 import torch
 
+import torchvision.transforms as transforms
+
 import torch.nn as nn
 import torch.optim as optim
 from unet import UNet
@@ -8,6 +10,7 @@ from utils import save_checkpoint
 from utils import get_data_loaders_divide
 from utils import check_accuracy
 from utils import save_predictions_as_imgs
+from transforms import CostumeAffineTransform
 
 import tqdm
 from pathlib import Path
@@ -21,6 +24,21 @@ BATCH_SIZE = 16
 NUM_WORKERS = 2
 PIN_MEMORY = True
 LOAD_MODEL = False
+
+
+# +/- 20% scale change [ratio]
+scales = [0.8, 1.2]
+# I am allowing any angle since it is potentially possible depending of microscope orientation [deg]
+angles = [-90, 90]
+# Small translations allowed since it is expected to be more or less centered [px]
+txs = [0, 100]
+tys = [0, 100]
+TRANSFORM = transforms.Compose(
+    [
+        CostumeAffineTransform(scales, angles, txs, tys),
+    ]
+)
+
 
 # Data paths
 TRAINING_DIR = Path(r"D:\gitProjects\segmentation_unet\data_set\data\training")
@@ -73,6 +91,7 @@ def main():
         BATCH_SIZE,
         NUM_WORKERS,
         PIN_MEMORY,
+        transform=TRANSFORM,
     )
     # Model filename checkpoint
     filename = str(CHECKPOINT_DIR.joinpath("unet_checkpoint.tar"))

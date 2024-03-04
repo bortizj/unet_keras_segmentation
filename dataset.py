@@ -12,6 +12,7 @@ class CostumeDataset(Dataset):
     """
 
     def __init__(self, source_list: list, labels_list: list, transform=None):
+        # Defines the given transformation from the user
         self.transform = transform
 
         # Define a transform to convert the image to torch tensor
@@ -37,14 +38,11 @@ class CostumeDataset(Dataset):
         label_img = cv2.imread(str(label_img_path), cv2.IMREAD_UNCHANGED)
         label_img = label_img.astype("float32") / 255.0
 
-        # Converting the images into torch tensors
+        if self.transform is not None:
+            source_img, label_img = self.transform(source_img, label_img)
+
         source_img = self.tensor_transform(source_img)
         label_img = self.tensor_transform(label_img)
-
-        # If there are extra image transformers apply it
-        if self.transform is not None:
-            source_img = self.transform(source_img)
-            label_img = self.transform(label_img)
 
         # Return the source image and the one hot encoding labelled image
         return source_img, label_img

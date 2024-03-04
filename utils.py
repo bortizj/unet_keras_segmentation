@@ -99,7 +99,7 @@ def get_data_loaders_divide(
         batch_size=batch_size,
         num_workers=num_workers,
         pin_memory=pin_memory,
-        shuffle=True,
+        shuffle=False,
     )
 
     return train_loader, validation_loader
@@ -127,7 +127,7 @@ def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=N
         batch_size=batch_size,
         num_workers=num_workers,
         pin_memory=pin_memory,
-        shuffle=True,
+        shuffle=False,
     )
 
     return data_loader, ds
