@@ -28,9 +28,9 @@ LOAD_MODEL = False
 scales = [0.8, 1.2]
 # Allowing any angle since it is potentially possible depending of microscope orientation [deg]
 angles = [-90, 90]
-# Small translations allowed since it is expected to be more or less centered [px] (+/-100 [px])
-txs = [-6.25, 6.25]
-tys = [-6.25, 6.25]
+# Small translations allowed since it is expected to be more or less centered [px] (+/-50 [px])
+txs = [-3.125, 3.125]
+tys = [-3.125, 3.125]
 TRANSFORM = CostumeAffineTransform(scales, angles, txs, tys)
 
 
