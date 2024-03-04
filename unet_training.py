@@ -1,7 +1,5 @@
 import torch
 
-import torchvision.transforms as transforms
-
 import torch.nn as nn
 import torch.optim as optim
 from unet import UNet
@@ -28,16 +26,12 @@ LOAD_MODEL = False
 
 # +/- 20% scale change [ratio]
 scales = [0.8, 1.2]
-# I am allowing any angle since it is potentially possible depending of microscope orientation [deg]
+# Allowing any angle since it is potentially possible depending of microscope orientation [deg]
 angles = [-90, 90]
-# Small translations allowed since it is expected to be more or less centered [px]
-txs = [0, 100]
-tys = [0, 100]
-TRANSFORM = transforms.Compose(
-    [
-        CostumeAffineTransform(scales, angles, txs, tys),
-    ]
-)
+# Small translations allowed since it is expected to be more or less centered [px] (+/-100 [px])
+txs = [-6.25, 6.25]
+tys = [-6.25, 6.25]
+TRANSFORM = CostumeAffineTransform(scales, angles, txs, tys)
 
 
 # Data paths

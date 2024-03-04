@@ -94,6 +94,7 @@ def get_data_loaders_divide(
         labels_list=labels_validation_list,
         transform=transform,
     )
+    # No shuffle because it is validation data
     validation_loader = DataLoader(
         validation_ds,
         batch_size=batch_size,
@@ -122,6 +123,7 @@ def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=N
         labels_list=labels_list,
         transform=transform,
     )
+    # No shuffle because shuffling only necessary during training
     data_loader = DataLoader(
         ds,
         batch_size=batch_size,
