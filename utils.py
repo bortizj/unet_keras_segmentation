@@ -88,11 +88,11 @@ def get_data_loaders_divide(
         shuffle=True,
     )
 
-    # Creating the validation data loader
+    # Creating the validation data loader (Validation does not need a transformer)
     validation_ds = CostumeDataset(
         source_list=source_validation_list,
         labels_list=labels_validation_list,
-        transform=transform,
+        transform=None,
     )
     # No shuffle because it is validation data
     validation_loader = DataLoader(
@@ -106,7 +106,7 @@ def get_data_loaders_divide(
     return train_loader, validation_loader
 
 
-def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=None):
+def get_data_loaders(path_data, batch_size, num_workers, pin_memory):
     """
     Gets a data loader of the given folder path
     """
@@ -117,11 +117,11 @@ def get_data_loaders(path_data, batch_size, num_workers, pin_memory, transform=N
         filename = path_data.joinpath("labels", ii.name)
         labels_list.append(filename)
 
-    # Creating the training data loader
+    # Creating the data loader (transformers are only necessary during training)
     ds = CostumeDataset(
         source_list=source_list,
         labels_list=labels_list,
-        transform=transform,
+        transform=None,
     )
     # No shuffle because shuffling only necessary during training
     data_loader = DataLoader(
