@@ -27,7 +27,33 @@ LOAD_MODEL = False
 # +/- 20% scale change [ratio]
 scales = [0.8, 1.2]
 # Allowing any angle since it is potentially possible depending of microscope orientation [deg]
-angles = [-90, 90]
+angles = [
+    -190,
+    -185,
+    -180,
+    -175,
+    -170,
+    -100,
+    -95,
+    -90,
+    -85,
+    -80,
+    -10,
+    -5,
+    0,
+    5,
+    10,
+    80,
+    85,
+    90,
+    95,
+    100,
+    170,
+    175,
+    180,
+    185,
+    190,
+]
 # Small translations allowed since it is expected to be more or less centered [px] (+/-50 [px])
 txs = [-3.125, 3.125]
 tys = [-3.125, 3.125]

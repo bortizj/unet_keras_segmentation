@@ -3,6 +3,18 @@ import random
 import cv2
 
 
+def _get_rand_value(in_list, default=0):
+    # returns the random number between the range or list of values
+    if in_list is None:
+        answer = default
+    elif len(in_list) == 2:
+        answer = in_list[0] + (in_list[1] - in_list[0]) * random.random()
+    else:
+        answer = random.choice(in_list)
+
+    return answer
+
+
 class CostumeAffineTransform:
     def __init__(self, scales, angles, txs, tys):
         self.scales = scales
@@ -11,11 +23,11 @@ class CostumeAffineTransform:
         self.tys = tys
 
     def __call__(self, img, labels):
-        # Getting a random value for the transformation within the given range
-        angle = self.angles[0] + (self.angles[1] - self.angles[0]) * random.random()
-        scale = self.scales[0] + (self.scales[1] - self.scales[0]) * random.random()
-        tx = self.txs[0] + (self.txs[1] - self.txs[0]) * random.random()
-        ty = self.tys[0] + (self.tys[1] - self.tys[0]) * random.random()
+        # Getting a random value for the transformation within the given range or list
+        scale = _get_rand_value(self.scales, default=1)
+        angle = _get_rand_value(self.angles, default=0)
+        tx = _get_rand_value(self.txs, default=0)
+        ty = _get_rand_value(self.tys, default=0)
 
         # Constructing the affine transformation matrix (rotation is around the center)
         center = (img.shape[1] / 2, img.shape[0] / 2)
